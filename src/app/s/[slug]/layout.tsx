@@ -1,6 +1,9 @@
+import SubscribeLeaveToggle from '@/components/SubscribeLeaveToggle'
 import { getAuthSession } from '@/lib/auth'
 import { db } from '@/lib/db'
+import { format } from 'date-fns'
 import { notFound } from 'next/navigation'
+
 import React, { FC } from 'react'
 
 
@@ -34,6 +37,8 @@ const layout = async ({ children, params: { slug } }: { children: React.ReactNod
 
     const isSubscribed = !!subscription
 
+    if(!subreddit) return notFound()
+
     const memeberCount = await db.subscription.count({
         where: {
             subreddit: {
@@ -42,7 +47,7 @@ const layout = async ({ children, params: { slug } }: { children: React.ReactNod
         },
     })
 
-    if(!subreddit) return notFound()
+    
     
     return (
         <div className='sm:container max-w-7xl mx-auto h-full pt-12'>
@@ -55,11 +60,48 @@ const layout = async ({ children, params: { slug } }: { children: React.ReactNod
                     {/* info slider */}
                     <div className='hidden md:block overflow-hidden h-fit rounded-lg border border-gray-200'>
                         <div className='px-6 py-4'>
-                            <p className='font-semibold py-3'>About s/</p>
+                            <p className='font-semibold py-3'>About s/{subreddit.name }</p>
                         </div>
 
                         <dl className='divide-y divide-gray-100 px-6 py-4 text-sm leading-6 bg-white'>
-                            <div className='flex justify-between gap-x-4 py-3'></div>
+                            <div className='flex justify-between gap-x-4 py-3'>
+                               
+                                <dt className='text-gray-500'>Created</dt>
+                                <dd className='text-gray-700'>
+                                    <time dateTime={subreddit.createdAt.toDateString()} >
+                                        {format(subreddit.createdAt, 'MMMM d, yyyy')}
+
+                                    </time>
+                                </dd>
+                            </div>
+
+                            <div className='flex justify-between gap-x-4 py-3'>
+                                <dt className='text-gray-500'>Members</dt>
+                                <dd className='text-gray-700'>
+                                    <div className='text-gray-900'>
+                                      {memeberCount}
+                                    </div>
+                                </dd>
+                            </div>
+                            
+                            {subreddit.creatorId === session?.user.id ? (
+                                <div className=' flex justify-between gap-x-4 py-3'>
+                                    <p className='text-gray-500'>
+                                        You created this communtiy
+                                    </p>
+                            </div>
+                            ): null}
+                            
+
+                            {subreddit.creatorId !== session?.user.id ? (
+                                <SubscribeLeaveToggle
+                                    subredditId={subreddit.id}
+                                    subredditName={subreddit.name}
+                                    isSubscribed={isSubscribed}
+                                />
+                            ): null}
+
+                           
                         </dl>
                     </div>
                 </div>
